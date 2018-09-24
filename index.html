@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <link href="https://fonts.googleapis.com/css?family=Lobster" rel="stylesheet" type="text/css">
+  
+  <style>
+	.title{color:red; font-family:Lobster}
+  </style>
+  <head>
+	<script>
+		function count(){
+			
+			var phrases = document.getElementsByName('keywords')[0].value;
+			console.log(phrases)
+			if(phrases.length <= 1){
+				document.getElementsByName('results')[0].innerHTML = phrases;
+				alert(phrases.length);
+			}
+			else{
+				words_list = phrases.split(' ');
+				words_dict = words.list.forEach(val => this[val] = (this[val] || 0) + 1);
+				alert(words_dict);
+				document.getElementByName('results').innerHTML = words_dict;
+			}
+		}		
+	</script>
+    <meta charset="utf-8">
+    <title>SoCloud</title>
+  </head>
+  <body>
+    <h1 class="title">Welcome to SoCloud.</h1>
+	<form name="search" action="/" method="get" target="_self">
+		<input type="text" name="keywords" placeholder="Search Keywords or Phrases" required>
+		<button type="submit" onclick="count()" data-color="blue">Sumbit</button>
+	</form>
+	<table name="result">
+		<tr>
+		   <th>Word</th>
+		   <th>Count</th>
+		</tr>
+	</table>
+	<p name="results"></p>
+  </body>
+</html>
+
