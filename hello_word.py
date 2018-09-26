@@ -15,7 +15,7 @@ def search():
 		</form>
 	'''
 
-@route('/search', method='POST')
+@route('/search')
 def do_search():
 	userinput = request.forms.get("userinput")
 
@@ -23,8 +23,8 @@ def do_search():
 	print(words)
 	wordcounter = collections.Counter(words)
 	
-	
-	printWordCounter = """<table border = "0"><tr><th>Word &nbsp</th><th>Count</th></tr>"""
+	print(wordcounter)
+	printWordCounter = """<table border = "0"><tr><th>Word</th><th>Count</th></tr>"""
 	for key, value in zip(wordcounter.keys(), wordcounter.values()):
 		print (key +"\t"+ str(value))
 		printWordCounter += ("<tr><td>" + key + "</td><td>" + str(value) + "</td></tr>")

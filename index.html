@@ -3,42 +3,32 @@
   <link href="https://fonts.googleapis.com/css?family=Lobster" rel="stylesheet" type="text/css">
   
   <style>
-	.title{color:red; font-family:Lobster}
+	.title{
+	        color:red; 
+	        font-family:Lobster;
+	        text-align: -webkit-center;
+		/*height: 92px;
+    		width: 272px;*/
+	}
+	.button{color:blue;}
+	
   </style>
   <head>
-	<script>
-		function count(){
+	<!--<script type="text/javascript">
 			
-			var phrases = document.getElementsByName('keywords')[0].value;
-			console.log(phrases)
-			if(phrases.length <= 1){
-				document.getElementsByName('results')[0].innerHTML = phrases;
-				alert(phrases.length);
-			}
-			else{
-				words_list = phrases.split(' ');
-				words_dict = words.list.forEach(val => this[val] = (this[val] || 0) + 1);
-				alert(words_dict);
-				document.getElementByName('results').innerHTML = words_dict;
-			}
-		}		
-	</script>
+	</script>-->
     <meta charset="utf-8">
     <title>SoCloud</title>
   </head>
   <body>
     <h1 class="title">Welcome to SoCloud.</h1>
-	<form name="search" action="/" method="get" target="_self">
-		<input type="text" name="keywords" placeholder="Search Keywords or Phrases" required>
-		<button type="submit" onclick="count()" data-color="blue">Sumbit</button>
+	<form name="search" action="" method="post" class="title">
+		<input type="text" id="keywords" name="keywords" placeholder="Search Keywords or Phrases" required>
+		<input value="Search" type="submit" class="button" >
 	</form>
-	<table name="result">
-		<tr>
-		   <th>Word</th>
-		   <th>Count</th>
-		</tr>
-	</table>
-	<p name="results"></p>
+	{{!results}}
+	{{!history}}
+	<p id="results" name="results"></p>
   </body>
 </html>
 
