@@ -5,14 +5,13 @@ from bottle import route,template,run , error, request
 from collections import Counter, defaultdict
 
 
-
-words_history = defaultdict(int) # store the value of history words
-
+# store the value of history words
+words_history = defaultdict(int) 
 	
 #This is the basic page 
 @route('/')
 def index():
-	return template("index.html", results = results, history = "")
+	return template("index.html", results = "" , history = "")
 
 #Extract the words from a text
 def getWords(text):
@@ -34,21 +33,31 @@ def displayHistory(h_dict,history):
 @route('/',method="POST")
 def counter():
 	global words_history
-	history = """<table id="history"><tr><th>&nbsp</th><th>History</th><tr>"""  # the html code of history page
-	keywords = request.forms.get("keywords") #get the input from the search box
-	words = getWords(keywords)  # return
+	# the html code of history page
+	history = """<table id="history">
+			<tr><th>Rank</th><th>History</th><th>Count</th></tr>
+			<caption>Top20 keywords in History</caption> """
+	# get the input from the search box
+	keywords = request.forms.get("keywords") 
+	# return the list of words from input
+	words = getWords(keywords)  
 
 	if(len(words) <= 1):
+		#update the word's frequency in the dict
 		words_history[words[0]] += 1
-		results = """<p id="results">The Search Keyword is """ + words[0] + "</p>" 
+		#return the word
+		results = """<p id="results">The Search Keyword is <b><u>""" + words[0] + "</u></b></p>"  
 		history = displayHistory(words_history,history)
 		return template("index.html", results = results, history = history)
 	else:
-		words_dict = Counter(words)  #return a dict of word frequency
-		
-		results = """<table id="results"><tr><th>&nbsp</th><th>Word &nbsp</th><th>Count</th></tr>"""
-		for index,key in enumerate(sorted(words_dict, key = words_dict.get, reverse = True)):
-			results += ("<tr><td>" + str(index+1) + "</td><td>" + key + "</td><td>" + str(words_dict[key]) + "</td></tr>" )
+		#return a dict of word frequency
+		words_dict = Counter(words) 
+		# the html code of results page
+		results = """<table id="results">
+				<tr><th>Rank</th><th>Word</th><th>Count</th></tr>
+				<caption>Results of Search</caption>"""  
+		for index,key in enumerate(sorted(words_dict, key = words_dict.get, reverse = True)):  # for 
+			results += ("<tr><td>" + str(index+1) + "</td><td>" + key + "</td><td>" + str(words_dict[key]) + "</td></tr>" ) 
 			words_history[key] += words_dict[key]
 	
 		history = displayHistory(words_history,history)

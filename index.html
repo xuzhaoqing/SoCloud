@@ -7,8 +7,29 @@
 	        color:red; 
 	        font-family:Lobster;
 	        text-align: -webkit-center;
-		/*height: 92px;
-    		width: 272px;*/
+		top: 100px;
+	}
+	.table-search{
+		position: relative;
+		left:400px;
+	}
+	table{
+		border-collapse: collapse;
+		width:20%;
+	}
+	th,td{
+		text-align: left;
+		padding: 8px;
+	}
+	tr:nth-child(even) {background-color: #f2f2f2;}
+	#results{
+		position: relative;
+		top:200px;
+	}
+	#history{
+		position: relative;
+		left: 800px;
+		top: 0px;
 	}
 	.button{color:blue;}
 	
@@ -21,14 +42,16 @@
     <title>SoCloud</title>
   </head>
   <body>
+    <img src="" >
     <h1 class="title">Welcome to SoCloud.</h1>
 	<form name="search" action="" method="post" class="title">
 		<input type="text" id="keywords" name="keywords" placeholder="Search Keywords or Phrases" required>
 		<input value="Search" type="submit" class="button" >
 	</form>
+    <div class = "table-search">
 	{{!results}}
 	{{!history}}
-	<p id="results" name="results"></p>
+    </div>
   </body>
 </html>
 

@@ -48,7 +48,7 @@ class crawler(object):
         self._url_queue = [ ]
         self._doc_id_cache = { }
         self._word_id_cache = { }
-
+	self._word_inv_idx = defaultdict(set)
         # functions to call when entering and exiting specific tags
         self._enter = defaultdict(lambda *a, **ka: self._visit_ignore)
         self._exit = defaultdict(lambda *a, **ka: self._visit_ignore)
@@ -110,7 +110,7 @@ class crawler(object):
         self._curr_url = ""
         self._curr_doc_id = 0
         self._font_size = 0
-        self._curr_words = None
+        self._curr_words = None  #This is the list of words id
 
         # get all urls into the queue
         try:
@@ -212,6 +212,8 @@ class crawler(object):
         #       font sizes (in self._curr_words), add all the words into the
         #       database for this document
         print("    num words="+ str(len(self._curr_words)))
+	for (curr_word_id, _) in self._curr_words:
+		self._word_inv_idx[curr_word_id].add(self._curr_doc_id)
 
     def _increase_font_factor(self, factor):
         """Increade/decrease the current font size."""
@@ -289,6 +291,33 @@ class crawler(object):
             # text (text, cdata, comments, etc.)
             else:
                 self._add_text(tag)
+
+    def get_inverted_index(self):
+	"""for every index of the word, given the indexes of the documents that reference them"""
+	# if we didn't call the crawl function, call it	
+	if not self._curr_words:  
+ 		self.crawl(depth=1) 
+	# we have saved the results into _word_inv_idx, so just return it
+	return self._word_inv_idx 
+  
+    def get_resolved_inverted_index(self):
+	"""for every word, given the documents that reference them"""
+	# a dict that saves the word and related documents	
+	word_res_inv_idx = defaultdict(set) 
+	# id_word_cache is a dict that is like: word = id_word_cache[index]
+	id_word_cache = {idx:word for word,idx in self._word_id_cache.items()}
+	# id_doc_cache is a dict: docs = id_doc_cache[index]
+	id_doc_cache = {idx:doc for doc,idx in self._doc_id_cache.items()}
+
+	for (word_idx, docs_idx) in self._word_inv_idx.items():
+		# find the word according to its index
+		word = id_word_cache[word_idx] 
+		# find the dics according to their indexes
+		docs = set([id_doc_cache[doc_idx] for doc_idx in list(docs_idx)])
+		# link the docs with words
+		word_res_inv_idx[word] = docs
+	return word_res_inv_idx
+
 
     def crawl(self, depth=2, timeout=3):
         """Crawl the web!"""
