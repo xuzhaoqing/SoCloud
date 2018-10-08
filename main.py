@@ -53,9 +53,7 @@ def counter():
 		#return a dict of word frequency
 		words_dict = Counter(words) 
 		# the html code of results page
-		results = """<table id="results">
-				<tr><th>Rank</th><th>Word</th><th>Count</th></tr>
-				<caption>Results of Search</caption>"""  
+		results = """<table id="results"><tr><th>Rank</th><th>Word</th><th>Count</th></tr><caption>"""+ "Search for \"" + ' '.join(words) + "\"" + "</caption>"  
 		for index,key in enumerate(sorted(words_dict, key = words_dict.get, reverse = True)):  # for 
 			results += ("<tr><td>" + str(index+1) + "</td><td>" + key + "</td><td>" + str(words_dict[key]) + "</td></tr>" ) 
 			words_history[key] += words_dict[key]
