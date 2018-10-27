@@ -39,3 +39,14 @@ defaultdict(<type 'set'>, {u'1114': set([u'https://xuzhaoqing.github.io/archiver
 ```
 
 which fits the requirements for LAB1, you could dive into crawler.py to see details, and the code is fully commented.
+
+----
+
+## LAB2
+### Requirements
+1. pip install oauth2client
+2. pip install google-api-python-client
+3. pip install httplib2
+4. pip install beaker
+5. pip install boto
+

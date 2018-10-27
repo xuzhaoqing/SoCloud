@@ -1,0 +1,2 @@
+Instance Id: i-01f5082e1b7246835
+Instance Public Ip: 34.228.18.60
