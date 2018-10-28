@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
   <link href="https://fonts.googleapis.com/css?family=Lobster" rel="stylesheet" type="text/css">
-  
+  <!-- Compiled and minified CSS -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/css/materialize.min.css">
+	<!-- Compiled and minified JavaScript -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/js/materialize.min.js"></script>
+
   <style>
 	.title{
 	        color:red; 
@@ -40,27 +44,77 @@
 		left: 800px;
 		top: 0px;
 	}
+	#recent{
+		position: relative;
+		left: 1200px;
+		top: 0px;
+	}
 	.button{color:blue;}
 	
-  </style>
+	.topright{
+		position:absolute;
+   	top:50px;
+   	right:50px;
+		text-decoration: underline;
+		font-size: 20px;
+		color: blue;
+	}
+	</style>
+	
+	
   <head>
 	<!--<script type="text/javascript">
-			
 	</script>-->
+	<script src="https://apis.google.com/js/platform.js" async defer></script>
+
     <meta charset="utf-8">
     <title>SoCloud</title>
   </head>
   <body>
-    <img src="https://i.imgur.com/j6jOB5d.jpg" class="logo">
-    <h1 class="title">Welcome to SoCloud.</h1>
+    <img src= "https://i.imgur.com/BcE3w4G.png" class="logo">
+		<h1 class="title">Welcome to SoCloud.</h1>
+
+		% if loggedin == False:
+		<div class = "topright">
+			<div class="btn white darken-4 col s10 m4">
+						<a href="/login" style="text-transform:none">
+							<div class="left">
+									<img width="20px" alt="Google &quot;G&quot; Logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png"/>
+							</div>
+							Sign in
+						</a>
+	 		</div>
+		 </div>
+		% end
+
+		% if loggedin == True:
+		 <div class = "topright">
+						 %if user_name != '':
+								<p>Username: {{user_name}} </p>
+						 %end
+						<p>Email: {{user_mail}}</p>
+			
+						<a href = "/logout" style="text-transform:none">
+							<div class = "left">
+								<img width="20px" alt="Google &quot;G&quot; Logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png"/>
+							</div>
+							Logout
+						</a>
+			</div>
+		% end
+
 	<form name="search" action="" method="post" class="title">
 		<input type="text" id="keywords" name="keywords" placeholder="Search Keywords or Phrases" required>
 		<input value="Search" type="submit" class="button" >
 	</form>
     <div class = "table-search">
 	{{!results}}
-	{{!history}}
-    </div>
+	% if loggedin == True:
+			{{!history}}
+			{{!recent}}
+	% end
+		</div>
+		
   </body>
 </html>
 

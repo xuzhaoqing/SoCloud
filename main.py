@@ -9,6 +9,9 @@ from googleapiclient.discovery import build
 import httplib2
 from beaker.middleware import SessionMiddleware
 
+CLIENT_ID = '547955120410-0jk8stcsm8ddqajbfmr8rfij9obq62gk.apps.googleusercontent.com'
+
+
 # A configuration for session management 
 session_opts = {
     'session.type': 'file',
@@ -21,8 +24,9 @@ app = SessionMiddleware(bottle.app(), session_opts)
 
 
 # store the value of history words
-words_history = defaultdict(int) 
-	
+words_history = defaultdict(lambda: defaultdict(int)) 
+recent_keywords = defaultdict(list)
+
 #This is the basic page 
 @route('/login','GET')
 def login():
@@ -42,12 +46,24 @@ def logout():
 
 @route('/')
 def index():
-	return template("index.html", results = "" , history = "")
+	session = request.environ.get('beaker.session')
+	# check if there is anyone signed in
+	if 'email' in session:
+		user_mail = session['email']
+	#	user_pic  = session['picture']
+		user_name = session['name']
+		loggedin = True
+		return template("index.html", results = "" , history = "" , recent = "", loggedin = loggedin, user_mail = user_mail, user_name = user_name)
+
+	else:
+		loggedin = False
+		return template("index.html", results = "" , history = "" , recent = "", loggedin = loggedin)
+	
+	
 
 #redirct page
 @route('/redirect')
 def redirect_page():
-	CLIENT_ID = '547955120410-0jk8stcsm8ddqajbfmr8rfij9obq62gk.apps.googleusercontent.com'
 	code = request.query.get('code', '')
 	flow = OAuth2WebServerFlow(client_id= CLIENT_ID,                            	
 				   client_secret= '7myUs1EDXK51oYhzMfEB0dw1',
@@ -60,7 +76,7 @@ def redirect_page():
 	# Get user mail
 	users_service = build('oauth2','v2',http = http)
 	user_document = users_service.userinfo().get().execute()
-	print user_document
+
 	user_mail = user_document['email']
 	user_pic  = user_document['picture']
 	user_name = user_document['name']
@@ -82,20 +98,44 @@ def getWords(text):
 
 def displayHistory(h_dict,history):
 	for index, key in enumerate(sorted(h_dict, key = h_dict.get, reverse = True)[:20]):
-			history += ("<tr><td>" + str(index+1) + "</td><td>" + key + "</td><td>" + str(words_history[key]) + "</td></tr>" ) 
+			history += ("<tr><td>" + str(index+1) + "</td><td>" + key + "</td><td>" + str(h_dict[key]) + "</td></tr>" ) 
 	return history
 	
-	
+def displayRecent(recent,user_mail):
+	if len(recent_keywords[user_mail]) >= 10:
+		recent_keywords[user_mail] = recent_keywords[user_mail][-10:]
+	for index,item in enumerate(recent_keywords[user_mail][::-1]):
+		recent += ("<tr><td>" + str(index+1) + "</td><td>" + item + "</td><tr>")	
+	return recent
 
 
 #Calculate the results and history words 
 @route('/',method="POST")
 def counter():
 	global words_history
+	session = request.environ.get('beaker.session')
+
+	if 'email' in session:
+		user_mail = session['email']
+		user_pic  = session['picture']
+		user_name = session['name']
+		loggedin = True
+	else:
+		loggedin = False
+		user_mail = ''
+		user_pic = ''
+		user_name = ''
+
+	
+
 	# the html code of history page
 	history = """<table id="history">
 			<tr><th>Rank</th><th>History</th><th>Count</th></tr>
 			<caption>Top20 keywords in History</caption> """
+	recent = """<table id="recent">
+			  <tr><th>Rank</th><th>Recent Keywords</th></tr><caption>Recent 10 Keywords</caption>
+				"""
+
 	# get the input from the search box
 	keywords = request.forms.get("keywords") 
 	# return the list of words from input
@@ -103,25 +143,30 @@ def counter():
 
 	if(len(words) <= 1):
 		#update the word's frequency in the dict
-		words_history[words[0]] += 1
+		words_history[user_mail][words[0]] += 1
+		recent_keywords[user_mail].append(words[0])
 		#return the word
 		results = """<p id="results">The Search Keyword is <b><u>""" + words[0] + "</u></b></p>"  
-		history = displayHistory(words_history,history)
-		return template("index.html", results = results, history = history)
+		history = displayHistory(words_history[user_mail],history)
+		recent = displayRecent(recent, user_mail)
+		return template("index.html", results = results, history = history, recent = recent, loggedin = loggedin, user_mail = user_mail, user_name = user_name)
 	else:
 		#return a dict of word frequency
 		words_dict = Counter(words) 
+		recent_keywords[user_mail] = recent_keywords[user_mail] + words
 		# the html code of results page
 		results = """<table id="results"><tr><th>Rank</th><th>Word</th><th>Count</th></tr><caption>"""+ "Search for \"" + ' '.join(words) + "\"" + "</caption>"  
 		for index,key in enumerate(sorted(words_dict, key = words_dict.get, reverse = True)):  # for 
 			results += ("<tr><td>" + str(index+1) + "</td><td>" + key + "</td><td>" + str(words_dict[key]) + "</td></tr>" ) 
-			words_history[key] += words_dict[key]
+			words_history[user_mail][key] += words_dict[key]
 	
-		history = displayHistory(words_history,history)
+		history = displayHistory(words_history[user_mail],history)
+		recent = displayRecent(recent, user_mail)
 
-		
-		return template("index.html",results = results, history = history)
+	if loggedin == True:
+		return template("index.html",results = results, history = history, recent = recent, loggedin = loggedin, user_mail = user_mail, user_name = user_name)
+	else:
+		return template("index.html", results = results, history = history, recent = recent, loggedin = loggedin)
 
 
-
-run(app = app, host = "0.0.0.0", port = 80)
+run(app = app, host = "localhost", port = 8080)

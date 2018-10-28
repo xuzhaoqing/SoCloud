@@ -16,9 +16,12 @@ print "begin launching an instance"
 '''
 Get the aws_access_key_id and aws_secret_access_key from .csv file
 '''
-with open("accessKeys.csv") as f:
-    info = f.readlines()
-    info = info[1].split(',')
+try:
+    with open("accessKeys.csv") as f:
+        info = f.readlines()
+        info = info[1].split(',')
+except:
+    print "I intentionally remove the accessKeys for safety"
 
 aws_access_key_id = info[0].strip()
 aws_secret_access_key = info[1].strip()

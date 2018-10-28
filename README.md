@@ -1,8 +1,36 @@
 # SoCloud
+## Author
+Group41: Zhaoqing Xu, StudentID: 1005644082, Email: zhaoqing.xu@mail.utoronto.ca
+
 ## Introduction
 SoCloud is a mini search engine developed by Zhaoqing Xu, and it's the project of CSC326H1: Programming Language in University of Toronto.
 ## Requirement
 python == 2.7
+
+
+## LAB2
+### Requirements
+1. pip install oauth2client
+2. pip install google-api-python-client
+3. pip install httplib2
+4. pip install beaker
+5. pip install boto
+
+### Public IP Address
+the public ip address of my web application is 34.228.18.60, and the port is 80. The application is now running on the server.
+Please go to 34.228.18.60:80 for more information
+
+### Frontend
+the Google Login works well but the format is not organized well due to the limited time
+
+### Backend
+The python script for launching EC2 instance on AWS is in [inst_setup.py](./inst_setup.py) 
+Pay attention that I removed the accessKey.csv file which contains the information of `aws_access_key_id` and `aws_secret_access_key` so that the script couldn't
+run as expected. 
+
+### Benchmark
+Please move to [./file/benchmark_lab2.md](./file/benchmark_lab2.md) to check for the benchmark
+
 
 ## Lab1 
 To check the correctness of lab1, please follow the guidelines:
@@ -42,11 +70,6 @@ which fits the requirements for LAB1, you could dive into crawler.py to see deta
 
 ----
 
-## LAB2
-### Requirements
-1. pip install oauth2client
-2. pip install google-api-python-client
-3. pip install httplib2
-4. pip install beaker
-5. pip install boto
+
+
 
