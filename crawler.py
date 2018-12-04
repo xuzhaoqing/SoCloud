@@ -24,6 +24,8 @@ import urlparse
 from BeautifulSoup import *
 from collections import defaultdict
 import re
+import numpy as np
+import sqlite3 as lite
 
 def attr(elem, attr):
     """An html attribute from an html element. E.g. <a href="">, then
@@ -48,7 +50,10 @@ class crawler(object):
         self._url_queue = [ ]
         self._doc_id_cache = { }
         self._word_id_cache = { }
-	self._word_inv_idx = defaultdict(set)
+
+        self._con = None
+        self._cur = None
+        self._word_inv_idx = defaultdict(set)
         # functions to call when entering and exiting specific tags
         self._enter = defaultdict(lambda *a, **ka: self._visit_ignore)
         self._exit = defaultdict(lambda *a, **ka: self._visit_ignore)
@@ -120,20 +125,40 @@ class crawler(object):
         except IOError:
             pass
     
+    def create_db(self,db_name):
+        self._con = lite.connect(db_name)
+        self._cur = self._con.cursor()
+        self._cur.execute("DROP TABLE IF EXISTS lexicon;")
+        self._cur.execute("DROP TABLE IF EXISTS document;")
+        self._cur.execute("DROP TABLE IF EXISTS inv_idx;")
+        self._cur.execute("DROP TABLE IF EXISTS relation;")
+        self._cur.execute("DROP TABLE IF EXISTS score;")
+        self._cur.execute("CREATE TABLE IF NOT EXISTS lexicon (word_idx INTEGER, word TEXT); ")
+        self._cur.execute("CREATE TABLE IF NOT EXISTS document (doc_idx INTEGER, link TEXT UNIQUE);")
+        self._cur.execute("CREATE TABLE IF NOT EXISTS inv_idx (word_idx INTEGER, doc_idx INTEGER);")
+        self._cur.execute("CREATE TABLE IF NOT EXISTS relation (from_url INTEGER, to_url INTEGER);")
+        self._cur.execute("CREATE TABLE IF NOT EXISTS score  (doc_idx INTEGER, rank INTEGER);")
+
     # TODO remove me in real version
     def _mock_insert_document(self, url):
         """A function that pretends to insert a url into a document db table
         and then returns that newly inserted document's id."""
         ret_id = self._mock_next_doc_id
         self._mock_next_doc_id += 1
-        return ret_id
+        if self._con != None and url != "":
+            self._cur.execute("INSERT INTO document VALUES('%s', '%s');" % (ret_id, url))
+            self._con.commit()
+        return ret_id 
     
     # TODO remove me in real version
     def _mock_insert_word(self, word):
-        """A function that pretends to inster a word into the lexicon db table
+        """A function that pretends to instrt a word into the lexicon db table
         and then returns that newly inserted word's id."""
         ret_id = self._mock_next_word_id
         self._mock_next_word_id += 1
+        if self._con != None:
+            self._cur.execute("INSERT INTO lexicon VALUES ('%s', '%s');" % (ret_id, word))
+            self._con.commit()
         return ret_id
     
     def word_id(self, word):
@@ -180,6 +205,9 @@ class crawler(object):
         """Add a link into the database, or increase the number of links between
         two pages in the database."""
         # TODO
+        if self._con != None:
+            self._cur.execute("INSERT INTO relation VALUES('%s', '%s');" % (from_doc_id, to_doc_id))
+            self._con.commit()
 
     def _visit_title(self, elem):
         """Called when visiting the <title> tag."""
@@ -212,8 +240,10 @@ class crawler(object):
         #       font sizes (in self._curr_words), add all the words into the
         #       database for this document
         print("    num words="+ str(len(self._curr_words)))
-	for (curr_word_id, _) in self._curr_words:
-		self._word_inv_idx[curr_word_id].add(self._curr_doc_id)
+        for (curr_word_id, _) in self._curr_words:
+            self._word_inv_idx[curr_word_id].add(self._curr_doc_id)
+            self._cur.execute("INSERT INTO inv_idx VALUES('%s', '%s');" % (curr_word_id, self._curr_doc_id))
+        self._con.commit()
 
     def _increase_font_factor(self, factor):
         """Increade/decrease the current font size."""
@@ -292,36 +322,76 @@ class crawler(object):
             else:
                 self._add_text(tag)
 
+    # This is a reference algorithm for PageRank 
+    def page_rank(self, num_iterations=20, initial_pr=1.0):
+        if self._cur != None:
+            self._cur.execute("SELECT * FROM relation;")
+            links = self._cur.fetchall()
+            page_rank = defaultdict(lambda: float(initial_pr))
+            num_outgoing_links = defaultdict(float)
+            incoming_link_sets = defaultdict(set)
+            incoming_links = defaultdict(lambda: np.array([]))
+            damping_factor = 0.85
+
+            # collect the number of outbound links and the set of all incoming documents
+            # for every document
+            for (from_id,to_id) in links:
+                num_outgoing_links[int(from_id)] += 1.0
+                incoming_link_sets[to_id].add(int(from_id))
+            
+            # convert each set of incoming links into a numpy array
+            for doc_id in incoming_link_sets:
+                incoming_links[doc_id] = np.array([from_doc_id for from_doc_id in incoming_link_sets[doc_id]])
+
+            num_documents = float(len(num_outgoing_links))
+            lead = (1.0 - damping_factor) / num_documents 
+            partial_PR = np.vectorize(lambda doc_id: page_rank[doc_id] / num_outgoing_links[doc_id])
+
+            for _ in xrange(num_iterations):
+                for doc_id in num_outgoing_links:
+                    tail = 0.0
+                    if len(incoming_links[doc_id]):
+                        tail = damping_factor * partial_PR(incoming_links[doc_id]).sum()
+                    page_rank[doc_id] = lead + tail
+            for item in page_rank:
+                self._cur.execute("INSERT OR REPLACE INTO score VALUES ('%s', '%s');" % (item, page_rank[item]))
+            self._con.commit()
+
     def get_inverted_index(self):
 	"""for every index of the word, given the indexes of the documents that reference them"""
-	# if we didn't call the crawl function, call it	
-	if not self._curr_words:  
- 		self.crawl(depth=1) 
-	# we have saved the results into _word_inv_idx, so just return it
-	return self._word_inv_idx 
+	    # if we didn't call the crawl function, call it	
+        if not self._curr_words:  
+            self.crawl(depth=1) 
+        # we have saved the results into _word_inv_idx, so just return it
+        return self._word_inv_idx 
   
     def get_resolved_inverted_index(self):
 	"""for every word, given the documents that reference them"""
 	# a dict that saves the word and related documents	
-	word_res_inv_idx = defaultdict(set) 
-	# id_word_cache is a dict that is like: word = id_word_cache[index]
-	id_word_cache = {idx:word for word,idx in self._word_id_cache.items()}
-	# id_doc_cache is a dict: docs = id_doc_cache[index]
-	id_doc_cache = {idx:doc for doc,idx in self._doc_id_cache.items()}
+        word_res_inv_idx = defaultdict(set) 
+        # id_word_cache is a dict that is like: word = id_word_cache[index]
+        id_word_cache = {idx:word for word,idx in self._word_id_cache.items()}
+        # id_doc_cache is a dict: docs = id_doc_cache[index]
+        id_doc_cache = {idx:doc for doc,idx in self._doc_id_cache.items()}
 
-	for (word_idx, docs_idx) in self._word_inv_idx.items():
-		# find the word according to its index
-		word = id_word_cache[word_idx] 
-		# find the dics according to their indexes
-		docs = set([id_doc_cache[doc_idx] for doc_idx in list(docs_idx)])
-		# link the docs with words
-		word_res_inv_idx[word] = docs
-	return word_res_inv_idx
+        for (word_idx, docs_idx) in self._word_inv_idx.items():
+            # find the word according to its index
+            word = id_word_cache[word_idx] 
+            # find the dics according to their indexes
+            docs = set([id_doc_cache[doc_idx] for doc_idx in list(docs_idx)])
+            # link the docs with words
+            word_res_inv_idx[word] = docs
+        return word_res_inv_idx
 
 
+ 
+
+    
+        
     def crawl(self, depth=2, timeout=3):
         """Crawl the web!"""
         seen = set()
+        self.create_db("links.db")
 
         while len(self._url_queue):
 
@@ -359,6 +429,9 @@ class crawler(object):
             finally:
                 if socket:
                     socket.close()
+
+        self.page_rank()
+        self._con.close()
 
 if __name__ == "__main__":
     bot = crawler(None, "urls.txt")

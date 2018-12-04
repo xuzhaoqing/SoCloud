@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-
+import sys
 import time 
 from boto import ec2
-
+import os
 
 KEY_PAIR_NAME = 'key_pair'
 GROUP_NAME = 'csc326-group41'
@@ -22,7 +22,7 @@ try:
         info = info[1].split(',')
 except:
     print "I intentionally remove the accessKeys for safety"
-
+    sys.exit()
 aws_access_key_id = info[0].strip()
 aws_secret_access_key = info[1].strip()
 
@@ -38,19 +38,22 @@ Step 2:
 
 try:
     key_pair = conn.create_key_pair(KEY_PAIR_NAME)
+    key_pair.save("")
 except:
-    conn.delete_key_pair(KEY_PAIR_NAME)
-    key_pair = conn.create_key_pair(KEY_PAIR_NAME)
-key_pair.save("")
+    pass
 
 '''
 Step 3:
     Create a security group with boto.ec2.connection.create_security_group(), which returns an instance of boto.ec2.securitygroup.SecurityGroup. 
     Security group provides restricted access only from authorized IP address and ports. For more details, see See http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html 
 '''
-
-group = conn.create_security_group(GROUP_NAME, DISCRIPTION)
-
+try:
+	group = conn.create_security_group(GROUP_NAME, DISCRIPTION)
+except:
+	for i in conn.get_all_security_groups():
+		if i.name == GROUP_NAME:
+			group = i
+print "The Group name is %s" % GROUP_NAME
 
 '''
 Step 4:
@@ -59,11 +62,12 @@ Step 4:
         4.2.To allow SSH, enableprotocol: TCP, from port: 22, to port: 22, CIDR  IP 0.0.0.0/0 
         4.3.To allow HTTP, enableprotocol: TCP, from port: 80, to port: 80, CIDR  IP 0.0.0.0/0
 '''
-
-group.authorize("icmp", -1, -1, "0.0.0.0/0")
-group.authorize('tcp', 22, 22, "0.0.0.0/0")
-group.authorize('tcp', 80, 80, "0.0.0.0/0")
-
+try:
+	group.authorize("icmp", -1, -1, "0.0.0.0/0")
+	group.authorize('tcp', 22, 22, "0.0.0.0/0")
+	group.authorize('tcp', 80, 80, "0.0.0.0/0")
+except:
+	pass
 '''
 Step 5:
     Start a new instance with boto.ec2.connection.run_instance(). 
@@ -93,8 +97,20 @@ while(inst.update() != "running"):
     time.sleep(5)
 
 print "Instance is now running"
+
+time.sleep(1)
+
+print "Waiting for the server to be stable here"
+for i in range(60,0,-1):
+	time.sleep(1)
+	sys.stdout.write(str(i) + ' ')
+sys.stdout.flush()
+
 print "Instance ID is: %s" % inst.id
 print "Instance Public IP address is: %s" % inst.ip_address
+print "SoCloud will run on %s on port 80" % inst.ip_address
 
-
-
+print "Server Configuration is preparing"
+args = "python ./inst_setup_aws.py " + inst.id +  " " + inst.ip_address
+os.system(args)
+print "All preparation done!"

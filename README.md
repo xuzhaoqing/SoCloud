@@ -4,8 +4,41 @@ Group41: Zhaoqing Xu, StudentID: 1005644082, Email: zhaoqing.xu@mail.utoronto.ca
 
 ## Introduction
 SoCloud is a mini search engine developed by Zhaoqing Xu, and it's the project of CSC326H1: Programming Language in University of Toronto.
-## Requirement
-python == 2.7
+
+## Local Machine Installation:
+The submitted code is expected to run on the local machine.
+To run the project locally, you have to do the following things
+1. run local_setup.sh:
+	sudo ./local_setup.sh
+2. go to the url:
+	http://localhost:8080
+
+## AWS Installation:
+
+
+
+
+## LAB4
+### Requirements
+1. pip install pyenchant
+2. 
+
+
+
+
+## LAB3
+### Requirements
+1. pip install numpy
+
+### Backend
+1. I use sqlite3 as persistent storage
+2. You could just run `run_backend_test.py` to test the page ranking and modify the `KEY_WORD` if needed.
+3. There are 5 URLs in `urls.txt` now, which could take some time to finish craweling. You could only save the first one(www.eecg.toronto.edu) to reduce the time for your check.
+
+### AWS Deployment
+1. DNS: ec2-34-207-245-186.compute-1.amazonaws.com
+2. IP address: 34.207.245.186
+3. Please move to [./file/benchmark_lab3.md](./file/benchmark_lab3.md) to check for the benchmark
 
 
 ## LAB2
@@ -25,8 +58,8 @@ the Google Login works well but the format is not organized well due to the limi
 
 ### Backend
 The python script for launching EC2 instance on AWS is in [inst_setup.py](./inst_setup.py) 
-Pay attention that I removed the accessKey.csv file which contains the information of `aws_access_key_id` and `aws_secret_access_key` so that the script couldn't
-run as expected. 
+Pay attention that I removed the `accessKey.csv` file which contains the information of `aws_access_key_id` and `aws_secret_access_key` so that the script couldn't
+run as expected. Please place your .csv here and rename to exactly the same name with mine to work correctly!
 
 ### Benchmark
 Please move to [./file/benchmark_lab2.md](./file/benchmark_lab2.md) to check for the benchmark
