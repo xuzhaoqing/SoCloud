@@ -19,13 +19,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import urllib2
-import urlparse
-from BeautifulSoup import *
+import urllib
+import urllib.request
+from bs4 import BeautifulSoup
+import bs4
 from collections import defaultdict
 import re
 import numpy as np
 import sqlite3 as lite
+
+# work for a strange SSL problem
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 def attr(elem, attr):
     """An html attribute from an html element. E.g. <a href="">, then
@@ -197,9 +202,9 @@ class crawler(object):
             curr_url, rel = rel, ""
             
         # compute the new url based on import 
-        curr_url = urlparse.urldefrag(curr_url)[0]
-        parsed_url = urlparse.urlparse(curr_url)
-        return urlparse.urljoin(parsed_url.geturl(), rel)
+        curr_url = urllib.parse.urldefrag(curr_url)[0]
+        parsed_url = urllib.parse.urlparse(curr_url)
+        return urllib.parse.urljoin(parsed_url.geturl(), rel)
 
     def add_link(self, from_doc_id, to_doc_id):
         """Add a link into the database, or increase the number of links between
@@ -267,7 +272,7 @@ class crawler(object):
         
     def _text_of(self, elem):
         """Get the text inside some element without any tags."""
-        if isinstance(elem, Tag):
+        if isinstance(elem, bs4.element.Tag):
             text = [ ]
             for sub_elem in elem:
                 text.append(self._text_of(sub_elem))
@@ -295,8 +300,7 @@ class crawler(object):
             tag = tag.next
 
             # html tag
-            if isinstance(tag, Tag):
-
+            if isinstance(tag, bs4.element.Tag):
                 if tag.parent != stack[-1]:
                     self._exit[stack[-1].name.lower()](stack[-1])
                     stack.pop()
@@ -347,7 +351,7 @@ class crawler(object):
             lead = (1.0 - damping_factor) / num_documents 
             partial_PR = np.vectorize(lambda doc_id: page_rank[doc_id] / num_outgoing_links[doc_id])
 
-            for _ in xrange(num_iterations):
+            for _ in range(num_iterations):
                 for doc_id in num_outgoing_links:
                     tail = 0.0
                     if len(incoming_links[doc_id]):
@@ -358,16 +362,20 @@ class crawler(object):
             self._con.commit()
 
     def get_inverted_index(self):
-	"""for every index of the word, given the indexes of the documents that reference them"""
-	    # if we didn't call the crawl function, call it	
+        """
+        for every index of the word, given the indexes of the documents that reference them   
+        """
+        # if we didn't call the crawl function, call it	
         if not self._curr_words:  
             self.crawl(depth=1) 
         # we have saved the results into _word_inv_idx, so just return it
         return self._word_inv_idx 
   
     def get_resolved_inverted_index(self):
-	"""for every word, given the documents that reference them"""
-	# a dict that saves the word and related documents	
+        """
+        for every word, given the documents that reference them
+        """
+    # a dict that saves the word and related documents	
         word_res_inv_idx = defaultdict(set) 
         # id_word_cache is a dict that is like: word = id_word_cache[index]
         id_word_cache = {idx:word for word,idx in self._word_id_cache.items()}
@@ -389,7 +397,9 @@ class crawler(object):
     
         
     def crawl(self, depth=2, timeout=3):
-        """Crawl the web!"""
+        """
+        Crawl the web!
+        """
         seen = set()
         self.create_db("links.db")
 
@@ -411,9 +421,8 @@ class crawler(object):
             
             socket = None
             try:
-                socket = urllib2.urlopen(url, timeout=timeout)
-                soup = BeautifulSoup(socket.read())
-
+                socket = urllib.request.urlopen(url, timeout=timeout)
+                soup = BeautifulSoup(socket.read(), features="html.parser")
                 self._curr_depth = depth_ + 1
                 self._curr_url = url
                 self._curr_doc_id = doc_id

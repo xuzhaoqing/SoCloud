@@ -1,4 +1,4 @@
-#!/guest/x/xuzhaoq2/virtualenv/venv/bin/python
+#!/Users/zhaoqingxu/Code/SoCloud/venv/bin/python
 
 import sys
 import getopt

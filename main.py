@@ -214,7 +214,7 @@ def search(keyword,page_no):
 	cache[keyword] = results 
 	
 	result_num = len(results)
-	pages = result_num / PER_PAGE if result_num % PER_PAGE == 0 else result_num / PER_PAGE + 1 
+	pages = result_num // PER_PAGE if result_num % PER_PAGE == 0 else result_num // PER_PAGE + 1 
 	start = (page_no - 1) * PER_PAGE 
 	end = page_no * PER_PAGE 
 

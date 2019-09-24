@@ -1,6 +1,8 @@
 # SoCloud
-## Author
-Group41: Zhaoqing Xu, StudentID: 1005644082, Email: zhaoqing.xu@mail.utoronto.ca
+
+# Requirements
+* Python3
+* pip3 install bottle, boto3, oauth2client, google-api-python-client, beaker, pyenchant
 
 ## Introduction
 SoCloud is a mini search engine developed by Zhaoqing Xu, and it's the project of CSC326H1: Programming Language in University of Toronto.
